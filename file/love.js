@@ -180,8 +180,20 @@
         },
         hover: function(x, y) {
             var ctx = this.tree.ctx;
-            var pixel = ctx.getImageData(x, y, 1, 1);
-            return pixel.data[3] == 255
+            try {
+                var pixel = ctx.getImageData(x, y, 1, 1);
+                return pixel.data[3] == 255;
+            } catch (e) {
+                // getImageData may throw if canvas is tainted by cross-origin images.
+                // Fallback to simple geometric hit test (circle) so hover/click still works.
+                var heart = this.heart || this.cirle;
+                var point = heart.point;
+                var scale = (this.heart && this.heart.scale) || this.cirle.scale || 1;
+                var dx = x - point.x;
+                var dy = y - point.y;
+                var r = 30 * scale; // approximate hit radius
+                return (dx * dx + dy * dy) <= (r * r);
+            }
         }
     }
 
@@ -265,6 +277,19 @@
                 height = bloom.height || this.height,
                 figure = this.seed.heart.figure;
             var r = 240, x, y;
+            // preload images if provided (or use defaults)
+            var imgs = bloom.images || [
+                './imgs/img1.jpeg', './imgs/img2.jpeg', './imgs/img3.jpeg', './imgs/img4.jpeg'
+            ];
+            this.images = [];
+            for (var ii = 0; ii < imgs.length; ii++) {
+                try {
+                    var _img = new Image();
+                    _img.src = imgs[ii];
+                    this.images.push(_img);
+                } catch (e) {}
+            }
+
             for (var i = 0; i < num; i++) {
                 cache.push(this.createBloom(width, height, r, figure));
             }
@@ -273,7 +298,11 @@
         },
 
         toDataURL: function(type) {
-            return this.canvas.toDataURL(type);
+            try {
+                return this.canvas.toDataURL(type);
+            } catch (e) {
+                return null;
+            }
         },
 
         draw: function(k) {
@@ -283,10 +312,17 @@
                 return ;
             }
             var point = rec.point,
-                image = rec.image;
+                image = rec.image,
+                canvas = rec.canvas;
 
             ctx.save();
-            ctx.putImageData(image, point.x, point.y);
+
+            // Prefer drawing from an offscreen canvas (works even when main canvas is tainted)
+            if (canvas) {
+                ctx.drawImage(canvas, point.x, point.y);
+            } else if (image) {
+                ctx.putImageData(image, point.x, point.y);
+            }
         	ctx.restore();
         },
 
@@ -370,13 +406,25 @@
 
         snapshot: function(k, x, y, width, height) {
             var ctx = this.ctx;
-            var image = ctx.getImageData(x, y, width, height); 
+            // Use an offscreen canvas + drawImage instead of getImageData.
+            // This avoids SecurityError when the canvas is tainted by images.
+            var off = document.createElement('canvas');
+            off.width = width;
+            off.height = height;
+            var offCtx = off.getContext('2d');
+            try {
+                offCtx.drawImage(this.canvas, x, y, width, height, 0, 0, width, height);
+            } catch (e) {
+                // If drawImage fails for any reason, keep an empty offscreen canvas.
+            }
+
             this.record[k] = {
-                image: image,
+                canvas: off,
+                image: null,
                 point: new Point(x, y),
                 width: width,
                 height: height
-            }
+            };
         },
         setSpeed: function(k, speed) {
             this.record[k || "move"].speed = speed;
@@ -384,19 +432,35 @@
         move: function(k, x, y) {
             var s = this, ctx = s.ctx;
             var rec = s.record[k || "move"];
+            if (!rec || !rec.point) return false;
             var point = rec.point,
                 image = rec.image,
+                canvas = rec.canvas,
                 speed = rec.speed || 10,
                 width = rec.width,
-                height = rec.height; 
+                height = rec.height;
+
+            // If we don't have a stored snapshot, just progress timing.
+            if (!canvas && !image) {
+                i = point.x + speed < x ? point.x + speed : x;
+                j = point.y + speed < y ? point.y + speed : y;
+                rec.point = new Point(i, j);
+                rec.speed = speed * 0.95;
+                if (rec.speed < 2) rec.speed = 2;
+                return i < x || j < y;
+            }
 
             i = point.x + speed < x ? point.x + speed : x;
-            j = point.y + speed < y ? point.y + speed : y; 
+            j = point.y + speed < y ? point.y + speed : y;
 
             ctx.save();
             ctx.clearRect(point.x, point.y, width, height);
-            ctx.putImageData(image, i, j);
-        	ctx.restore();
+            if (canvas) {
+                ctx.drawImage(canvas, i, j);
+            } else {
+                ctx.putImageData(image, i, j);
+            }
+            ctx.restore();
 
             rec.point = new Point(i, j);
             rec.speed = speed * 0.95;
@@ -496,11 +560,12 @@
             var s = this, ctx = s.tree.ctx, figure = s.figure;
 
             ctx.save();
-            ctx.fillStyle = s.color;
             ctx.globalAlpha = s.alpha;
             ctx.translate(s.point.x, s.point.y);
             ctx.scale(s.scale, s.scale);
             ctx.rotate(s.angle);
+
+            // create heart path
             ctx.beginPath();
             ctx.moveTo(0, 0);
             for (var i = 0; i < figure.length; i++) {
@@ -508,7 +573,44 @@
                 ctx.lineTo(p.x, -p.y);
             }
             ctx.closePath();
-            ctx.fill();
+
+            // if images are available, clip the heart path and draw an image inside
+            if (s.tree.images && s.tree.images.length) {
+                ctx.save();
+                ctx.clip();
+
+                // compute figure bounds to size the image
+                var minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity, pp;
+                for (var j = 0; j < figure.length; j++) {
+                    pp = figure.get(j);
+                    if (pp.x < minX) minX = pp.x;
+                    if (pp.x > maxX) maxX = pp.x;
+                    if (pp.y < minY) minY = pp.y;
+                    if (pp.y > maxY) maxY = pp.y;
+                }
+                var w = (maxX - minX) || 30;
+                var h = (maxY - minY) || 30;
+
+                var img = s.tree.images[Math.floor(Math.random() * s.tree.images.length)];
+                if (img && img.complete) {
+                    try {
+                        ctx.drawImage(img, minX, -maxY, w, h);
+                    } catch (e) {
+                        ctx.fillStyle = s.color;
+                        ctx.fill();
+                    }
+                } else {
+                    // fallback fill until image is ready
+                    ctx.fillStyle = s.color;
+                    ctx.fill();
+                }
+
+                ctx.restore();
+            } else {
+                ctx.fillStyle = s.color;
+                ctx.fill();
+            }
+
             ctx.restore();
         },
         jump: function() {
