@@ -14,7 +14,9 @@ $(window).resize(function() {
 });
 
 (function($) {
-	$.fn.typewriter = function() {
+	$.fn.typewriter = function(speed, callback) {
+		if (typeof speed === 'function') { callback = speed; speed = undefined; }
+		speed = speed || 75;
 		this.each(function() {
 			var $ele = $(this), str = $ele.html(), progress = 0;
 			$ele.html('');
@@ -28,8 +30,9 @@ $(window).resize(function() {
 				$ele.html(str.substring(0, progress) + (progress & 1 ? '_' : ''));
 				if (progress >= str.length) {
 					clearInterval(timer);
+					if (typeof callback === 'function') callback.call($ele[0]);
 				}
-			}, 75);
+			}, speed);
 		});
 		return this;
 	};

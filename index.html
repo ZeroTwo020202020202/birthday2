@@ -2,8 +2,10 @@
 <html xml:lang="en" xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>HBD love</title>	    
-    <link type="text/css" rel="stylesheet" href="./file/default.css">
+    <link type="text/css" rel="stylesheet" href="./file/default.css?v=2">
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     <script type="text/javascript" src="./file/jquery.min.js"></script>
     <script type="text/javascript" src="./file/jscex.min.js"></script>
     <script type="text/javascript" src="./file/jscex-parser.js"></script>
@@ -29,14 +31,13 @@
         </audio>
         <div id="wrap">
             <div id="text">
-                <div id="code">
-                    <span class="say">My beautiful wife 💞</span><br>
-                    <span class="say">Happy Birthday 🎈</span><br>
-                    <span class="say">May Allah bless you 🍀</span><br>
-                    <span class="say">And give u many happiness 💕</span><br>
-                    <span class="say">I loved you ❤️</span><br>
-                    <span class="say">And I will always love u 🥺 ❤️</span><br>
-                    <span class="say">Hope u have a great day today ❤️😘</span><br>
+                <div id="code" style="display:none;">
+                    <div class="title-wrap">
+                        <h1 class="birthday-title"><span id="titleText">Happy Birthday, Kaviya!</span></h1>
+                        <p class="birthday-sub"><span id="subtitleText">Wishing you joy, love and countless beautiful moments today and always.</span></p>
+                        <!-- <p class="wait-text">Please wait...</p> -->
+                        <button id="revealBtn" class="cta-button" onclick="var m=document.getElementById('poemModal'); if(m) m.setAttribute('aria-hidden','false');">Please click me</button>
+                    </div>
                 </div>
             </div>
             <div id="clock-box">
@@ -158,14 +159,223 @@
             foot.draw();
             tree.snapshot("p2", 500, 0, 610, 680);
 
-            canvas.parent().css("background", "url(" + tree.toDataURL('image/png') + ")");
+            var _data = tree.toDataURL('image/png');
+            if (_data) {
+                canvas.parent().css("background", "url(" + _data + ")");
+            }
             canvas.css("background", "#ffe");
-            $await(Jscex.Async.sleep(300));
+            $await(Jscex.Async.sleep(300)); 
             canvas.css("background", "none");
+
+            // After move completes, reveal a single image inside a full heart shape grid-by-grid
+                function revealImageGrid(imgSrc, centerX, centerY, displayScale, rows, cols, delay) {
+                    return eval(Jscex.compile("async", function () {
+                        function drawHeartGlowOutline(ctx, figure, centerX, centerY, displayScale) {
+                            if (!figure || !figure.length) return;
+
+                            ctx.save();
+                            ctx.beginPath();
+
+                            // Build path in screen pixels (avoid transform-scaling shadow/line widths)
+                            var first = figure.get(0);
+                            ctx.moveTo(centerX + first.x * displayScale, centerY + (-first.y) * displayScale);
+                            for (var i = 1; i < figure.length; i++) {
+                                var p = figure.get(i);
+                                ctx.lineTo(centerX + p.x * displayScale, centerY + (-p.y) * displayScale);
+                            }
+                            ctx.closePath();
+
+                            ctx.lineJoin = 'round';
+                            ctx.lineCap = 'round';
+
+                            // Outer glow
+                            ctx.shadowColor = 'rgba(255, 77, 115, 0.95)';
+                            ctx.shadowBlur = 22;
+                            ctx.strokeStyle = 'rgba(255, 77, 115, 0.85)';
+                            ctx.lineWidth = 6;
+                            ctx.stroke();
+
+                            // Inner bright stroke
+                            ctx.shadowBlur = 0;
+                            ctx.strokeStyle = 'rgba(255, 230, 238, 0.95)';
+                            ctx.lineWidth = 2;
+                            ctx.stroke();
+
+                            ctx.restore();
+                        }
+
+                        var img = new Image();
+                        img.src = imgSrc;
+                        var wait = 0;
+                        while (!img.complete && wait < 100) {
+                            $await(Jscex.Async.sleep(50));
+                            wait += 1;
+                        }
+
+                        var figure = tree.seed.heart.figure;
+                        var minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity, p;
+                        for (var i = 0; i < figure.length; i++) {
+                            p = figure.get(i);
+                            if (p.x < minX) minX = p.x;
+                            if (p.x > maxX) maxX = p.x;
+                            if (p.y < minY) minY = p.y;
+                            if (p.y > maxY) maxY = p.y;
+                        }
+
+                        var heartW = maxX - minX;
+                        var heartH = maxY - minY;
+
+                        // increase overall heart size by 10% (wider/taller)
+                        var heartCx = (minX + maxX) / 2;
+                        var heartCy = (minY + maxY) / 2;
+                        heartW = heartW * 1.10;
+                        heartH = heartH * 1.10;
+                        minX = heartCx - heartW / 2;
+                        maxX = heartCx + heartW / 2;
+                        minY = heartCy - heartH / 2;
+                        maxY = heartCy + heartH / 2;
+
+                        // Offscreen canvas holds the image already scaled to cover the heart bbox
+                        var offW = Math.max(1, Math.round(heartW * displayScale));
+                        var offH = Math.max(1, Math.round(heartH * displayScale));
+                        var off = document.createElement('canvas');
+                        off.width = offW;
+                        off.height = offH;
+                        var offCtx = off.getContext('2d');
+                        offCtx.imageSmoothingEnabled = true;
+
+                        if (img && img.width && img.height) {
+                            var s = Math.max(offW / img.width, offH / img.height);
+                            var dw = img.width * s;
+                            var dh = img.height * s;
+                            var ox = (offW - dw) / 2;
+                            var oy = (offH - dh) / 2;
+                            // nudge the image a little further downward inside the heart
+                            oy = oy + Math.round(offH * 0.12); // move image down ~12% of heart height
+                            try {
+                                offCtx.drawImage(img, 0, 0, img.width, img.height, ox, oy, dw, dh);
+                            } catch (e) {
+                                // ignore
+                            }
+                        }
+
+                        var tileW = heartW / cols;
+                        var tileH = heartH / rows;
+                        var srcTileW = offW / cols;
+                        var srcTileH = offH / rows;
+
+                        var ctx = canvas[0].getContext('2d');
+
+                        for (var r = 0; r < rows; r++) {
+                            for (var c = 0; c < cols; c++) {
+                                var sx = Math.floor(c * srcTileW);
+                                var sy = Math.floor(r * srcTileH);
+                                var sW = Math.ceil(srcTileW);
+                                var sH = Math.ceil(srcTileH);
+
+                                var dx = minX + c * tileW;
+                                var dy = -maxY + r * tileH;
+                                // shift the revealed image down by 50px (visual pixels)
+                                dy += (50 / displayScale);
+
+                                ctx.save();
+                                ctx.translate(centerX, centerY);
+                                ctx.scale(displayScale, displayScale);
+
+                                // heart clip path
+                                ctx.beginPath();
+                                ctx.moveTo(0, 0);
+                                for (var k = 0; k < figure.length; k++) {
+                                    var pp = figure.get(k);
+                                    ctx.lineTo(pp.x, -pp.y);
+                                }
+                                ctx.closePath();
+                                ctx.clip();
+
+                                // draw just this tile (rect is clipped by heart)
+                                try {
+                                    ctx.drawImage(off, sx, sy, sW, sH, dx, dy, tileW, tileH);
+                                } catch (e) {
+                                    ctx.fillStyle = '#FFC0CB';
+                                    ctx.fillRect(dx, dy, tileW, tileH);
+                                }
+                                ctx.restore();
+
+                                $await(Jscex.Async.sleep(delay || 30));
+                            }
+                        }
+
+                        // Add a glowing outline on top after reveal
+                        drawHeartGlowOutline(ctx, figure, centerX, centerY, displayScale);
+                    }));
+                }
+
+                // position the heart based on the moved snapshot if available (p2), otherwise fallback to right-side
+                var canvasW = canvas.width();
+                var canvasH = canvas.height();
+                var rec = tree.record && tree.record['p2'];
+                var centerX, centerY, displayScale;
+                if (rec && rec.point) {
+                    centerX = rec.point.x + rec.width / 2;
+                    centerY = rec.point.y + rec.height / 2;
+                } else {
+                    centerX = Math.floor(canvasW * 0.75);
+                    centerY = Math.floor(canvasH * 0.38);
+                }
+
+                // tweak position so heart sits a little higher and slightly left
+                centerX = centerX - 10; // move left
+                centerY = centerY - 80; // move up (previous 60 + extra 20)
+
+                // compute scale so heart bounding box fits roughly into the snapshot width
+                var figure = tree.seed.heart.figure;
+                var minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity, pp;
+                for (var ii = 0; ii < figure.length; ii++) {
+                    pp = figure.get(ii);
+                    if (pp.x < minX) minX = pp.x;
+                    if (pp.x > maxX) maxX = pp.x;
+                    if (pp.y < minY) minY = pp.y;
+                    if (pp.y > maxY) maxY = pp.y;
+                }
+                var heartW = maxX - minX;
+
+                var desiredWidth = (rec && rec.width) ? rec.width : Math.floor(canvasW / 3);
+                displayScale = desiredWidth / heartW;
+
+                // slightly reduce scale so image doesn't cover face
+                displayScale = displayScale * 0.95;
+                // increase grid density to reduce tile seams
+                var reveal = revealImageGrid('./imgs/img2.jpeg', centerX, centerY, displayScale, 18, 18, 25);
+                $await(reveal());
         }));
 
         var textAnimate = eval(Jscex.compile("async", function () {
-            $("#code").show().typewriter();
+            // show block then run typed animations
+            $("#code").fadeIn(240);
+            try {
+                var titleEl = document.getElementById('titleText');
+                var subEl = document.getElementById('subtitleText');
+                // ensure wait/button hidden until typing completes
+                $(".wait-text, .cta-button").hide();
+
+                if (titleEl) {
+                    $(titleEl).typewriter(110, function() {
+                        // after title finishes, start subtitle
+                        if (subEl) {
+                            $(subEl).typewriter(90, function() {
+                                // when subtitle finishes, fade in wait/button smoothly
+                                $(".wait-text, .cta-button").fadeIn(420);
+                            });
+                        } else {
+                            $(".wait-text, .cta-button").fadeIn(420);
+                        }
+                    });
+                } else if (subEl) {
+                    $(subEl).typewriter(90, function() { $(".wait-text, .cta-button").fadeIn(420); });
+                } else {
+                    $(".wait-text, .cta-button").fadeIn(420);
+                }
+            } catch (e) {}
         }));
 	    
         var runAsync = eval(Jscex.compile("async", function () {
@@ -174,10 +384,44 @@
             $await(flowAnimate());
             $await(moveAnimate());
             textAnimate().start();
+
+            // wire the modal button after animations start
+            try {
+                var btn = document.getElementById('revealBtn');
+                var modal = document.getElementById('poemModal');
+                var closeBtn = modal && modal.querySelector('.modal-close');
+                function showModal() {
+                    if (!modal) return;
+                    modal.setAttribute('aria-hidden','false');
+                }
+                function hideModal() {
+                    if (!modal) return;
+                    modal.setAttribute('aria-hidden','true');
+                }
+                if (btn) btn.addEventListener('click', showModal);
+                if (closeBtn) closeBtn.addEventListener('click', hideModal);
+                if (modal) modal.addEventListener('click', function(e){ if (e.target === modal) hideModal(); });
+            } catch(e) {}
         }));
 
         runAsync().start();
     })();
     </script>
+
+    <!-- Modal kept outside #code so it's always present and clickable -->
+    <div id="poemModal" class="modal" aria-hidden="true" onclick="if(event.target===this) this.setAttribute('aria-hidden','true');">
+        <div class="modal-content">
+            <button class="modal-close" aria-label="Close" onclick="document.getElementById('poemModal').setAttribute('aria-hidden','true')">×</button>
+            <h2 class="modal-title">A Poem for You</h2>
+            <div class="poem">
+                <p>கவிதையைப் படைத்தவர்களை எல்லாம்</p>
+                <p>கவிஞன் எனப் போற்றுகிறது</p>
+                <p>இந்த உலகம்</p>
+                <p>பாவம் இந்த காவியத்தைப்</p>
+                <p>படைத்த உன் பெற்றோர்களை</p>
+                <p>பார்க்காமல் போனதால்.</p>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
