@@ -73,6 +73,10 @@ a {
   color: #fff7e6;
   opacity: 0.95;
 }
+.wait-text, .cta-button {
+  display: none;
+}
+
 .cta-button {
   display: inline-block;
   margin: 6px 0 0 6px;

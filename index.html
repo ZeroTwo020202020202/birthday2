@@ -31,11 +31,11 @@
         </audio>
         <div id="wrap">
             <div id="text">
-                <div id="code">
+                <div id="code" style="display:none;">
                     <div class="title-wrap">
-                        <h1 class="birthday-title">Happy Birthday, Kaviya!</h1>
-                        <p class="birthday-sub">Wishing you joy, love and countless beautiful moments today and always.</p>
-                        <p class="wait-text">Please wait...</p>
+                        <h1 class="birthday-title"><span id="titleText">Happy Birthday, Kaviya!</span></h1>
+                        <p class="birthday-sub"><span id="subtitleText">Wishing you joy, love and countless beautiful moments today and always.</span></p>
+                        <!-- <p class="wait-text">Please wait...</p> -->
                         <button id="revealBtn" class="cta-button" onclick="var m=document.getElementById('poemModal'); if(m) m.setAttribute('aria-hidden','false');">Please click me</button>
                     </div>
                 </div>
@@ -170,6 +170,40 @@
             // After move completes, reveal a single image inside a full heart shape grid-by-grid
                 function revealImageGrid(imgSrc, centerX, centerY, displayScale, rows, cols, delay) {
                     return eval(Jscex.compile("async", function () {
+                        function drawHeartGlowOutline(ctx, figure, centerX, centerY, displayScale) {
+                            if (!figure || !figure.length) return;
+
+                            ctx.save();
+                            ctx.beginPath();
+
+                            // Build path in screen pixels (avoid transform-scaling shadow/line widths)
+                            var first = figure.get(0);
+                            ctx.moveTo(centerX + first.x * displayScale, centerY + (-first.y) * displayScale);
+                            for (var i = 1; i < figure.length; i++) {
+                                var p = figure.get(i);
+                                ctx.lineTo(centerX + p.x * displayScale, centerY + (-p.y) * displayScale);
+                            }
+                            ctx.closePath();
+
+                            ctx.lineJoin = 'round';
+                            ctx.lineCap = 'round';
+
+                            // Outer glow
+                            ctx.shadowColor = 'rgba(255, 77, 115, 0.95)';
+                            ctx.shadowBlur = 22;
+                            ctx.strokeStyle = 'rgba(255, 77, 115, 0.85)';
+                            ctx.lineWidth = 6;
+                            ctx.stroke();
+
+                            // Inner bright stroke
+                            ctx.shadowBlur = 0;
+                            ctx.strokeStyle = 'rgba(255, 230, 238, 0.95)';
+                            ctx.lineWidth = 2;
+                            ctx.stroke();
+
+                            ctx.restore();
+                        }
+
                         var img = new Image();
                         img.src = imgSrc;
                         var wait = 0;
@@ -270,6 +304,9 @@
                                 $await(Jscex.Async.sleep(delay || 30));
                             }
                         }
+
+                        // Add a glowing outline on top after reveal
+                        drawHeartGlowOutline(ctx, figure, centerX, centerY, displayScale);
                     }));
                 }
 
@@ -313,8 +350,32 @@
         }));
 
         var textAnimate = eval(Jscex.compile("async", function () {
-            // Don't run the typewriter effect on interactive UI (button/modal)
-            $("#code").show();
+            // show block then run typed animations
+            $("#code").fadeIn(240);
+            try {
+                var titleEl = document.getElementById('titleText');
+                var subEl = document.getElementById('subtitleText');
+                // ensure wait/button hidden until typing completes
+                $(".wait-text, .cta-button").hide();
+
+                if (titleEl) {
+                    $(titleEl).typewriter(110, function() {
+                        // after title finishes, start subtitle
+                        if (subEl) {
+                            $(subEl).typewriter(90, function() {
+                                // when subtitle finishes, fade in wait/button smoothly
+                                $(".wait-text, .cta-button").fadeIn(420);
+                            });
+                        } else {
+                            $(".wait-text, .cta-button").fadeIn(420);
+                        }
+                    });
+                } else if (subEl) {
+                    $(subEl).typewriter(90, function() { $(".wait-text, .cta-button").fadeIn(420); });
+                } else {
+                    $(".wait-text, .cta-button").fadeIn(420);
+                }
+            } catch (e) {}
         }));
 	    
         var runAsync = eval(Jscex.compile("async", function () {
