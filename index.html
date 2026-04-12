@@ -22,17 +22,39 @@
 </head>
 <body>
     <div id="main">
-        <div id="error"><a href="http://www.google.cn/chrome/intl/zh-CN/landing_chrome.html?hl=zh-CN&brand=CHMI">Chrome</a> (<a href="http://firefox.com.cn/download/">Firefox</a>)</div>.       
-        <audio id="myAudio" src="majboor-sheheryar-rehan-x-zoha.mp3"></audio>
+    <audio id="myAudio" src="majboor-sheheryar-rehan-x-zoha-waseem-music-video-2025-aap-ka-he-kehna-ban_X8T7CETg.mp3"></audio>
+                    <script>
+                        const lines = [
+                        "Happy Birthday Nani 🤍",
+                        "Main bas itna kehna chahta hoon ki aap hamesha khush raho",
+                        "Halat aise hain ki hum baat nahi kar rahe, par iska matlab yeh bilkul nahi hai",
+                        "Aapke liye hamesha care, respect aur love rahega.",
+                        "Love you so much Nani 💕"
+                        ];
 
-         <h2 onclick="playAudio()" style="cursor:pointer; color:red;">
-         👉 Click here Birthday Queen 👑
-         </h2>
-                    <span class="say">Happy Birthday Nani 🤍</span><br>
-                    <span class="say">Main bas itna kehna chahta hoon ki aap hamesha khush raho aur apna dhyaan rakho.</span><br>
-                    <span class="say">Halat aise hain ki hum baat nahi kar rahe, par iska matlab yeh bilkul nahi ki aap mere liye important nahi ho.</span><br>
-                    <span class="say">Aapke liye hamesha care, respect aur love rahega.</span><br>
-                    <span class="say">Love you so much Nani 💕</span><br>
+                        let i = 0;
+                        let j = 0;
+                        let currentLine = "";
+                        let speed = 50;
+
+                        function typeEffect() {
+                            if (i < lines.length) {
+                                    if (j < lines[i].length) {
+                                                currentLine += lines[i][j];
+                                                            document.getElementById("text").innerHTML = currentLine;
+                                                                        j++;
+                                                                                    setTimeout(typeEffect, speed);
+                                                                                            } else {
+                                                                                                        currentLine += "<br>";
+                                                                                                                    j = 0;
+                                                                                                                                i++;
+                                                                                                                                            setTimeout(typeEffect, 500);
+                                                                                                                                                    }
+                                                                                                                                                        }
+                                                                                                                                                        }
+
+                                                                                                                                                        typeEffect();
+                                                                                                                                                        </script>
                 </div>
             </div>
             <div id="clock-box">
