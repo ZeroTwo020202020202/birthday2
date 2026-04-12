@@ -14,29 +14,45 @@
     <script type="text/javascript" src="./file/functions.js" charset="utf-8"></script>
     <script type="text/javascript" src="./file/love.js" charset="utf-8"></script>
     <script>
-        function playAudio() {
-            var audio = document.getElementById("myAudio");
-            audio.play();
+        <audio id="myAudio" src="majboor-sheheryar-rehan-x-zoha-waseem-music-video-2025-aap-ka-he-kehna-ban_X8T7CETg.mp3"></audio
         }
     </script>
 </head>
 <body>
     <div id="main">
-        <div id="error"><a href="http://www.google.cn/chrome/intl/zh-CN/landing_chrome.html?hl=zh-CN&brand=CHMI">Chrome</a> (<a href="http://firefox.com.cn/download/">Firefox</a>)</div>
-        <audio autoplay="autoplay" height="100" width="100" id="myAudio">
-            <source src="aud.mp3" type="audio/mp3" />
-            <embed height="100" width="100" src="aud.mp3" />
-        </audio>
-        <div id="wrap">
-            <div id="text">
-                <div id="code">
-                    <span class="say">My beautiful wife 💞</span><br>
-                    <span class="say">Happy Birthday 🎈</span><br>
-                    <span class="say">May Allah bless you 🍀</span><br>
-                    <span class="say">And give u many happiness 💕</span><br>
-                    <span class="say">I loved you ❤️</span><br>
-                    <span class="say">And I will always love u 🥺 ❤️</span><br>
-                    <span class="say">Hope u have a great day today ❤️😘</span><br>
+    <audio id="myAudio" src="majboor-sheheryar-rehan-x-zoha-waseem-music-video-2025-aap-ka-he-kehna-ban_X8T7CETg.mp3"></audio>
+                    <script>
+                        const lines = [
+                        "Happy Birthday Nani 🤍",
+                        "Main bas itna kehna chahta hoon ki aap hamesha khush raho",
+                        "Halat aise hain ki hum baat nahi kar rahe, par iska matlab yeh bilkul nahi hai",
+                        "Aapke liye hamesha care, respect aur love rahega.",
+                        "Love you so much Nani 💕"
+                        ];
+
+                        let i = 0;
+                        let j = 0;
+                        let currentLine = "";
+                        let speed = 50;
+
+                        function typeEffect() {
+                            if (i < lines.length) {
+                                    if (j < lines[i].length) {
+                                                currentLine += lines[i][j];
+                                                            document.getElementById("text").innerHTML = currentLine;
+                                                                        j++;
+                                                                                    setTimeout(typeEffect, speed);
+                                                                                            } else {
+                                                                                                        currentLine += "<br>";
+                                                                                                                    j = 0;
+                                                                                                                                i++;
+                                                                                                                                            setTimeout(typeEffect, 500);
+                                                                                                                                                    }
+                                                                                                                                                        }
+                                                                                                                                                        }
+
+                                                                                                                                                        typeEffect();
+                                                                                                                                                        </script>
                 </div>
             </div>
             <div id="clock-box">
@@ -177,7 +193,7 @@
         }));
 
         runAsync().start();
-    })();
+    })()
     </script>
 </body>
 </html>
