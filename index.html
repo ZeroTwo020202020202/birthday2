@@ -7,34 +7,30 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div id="click-me-overlay">
+        <div class="pulsing-heart">❤️</div>
+        <p>CLICK HERE</p>
+    </div>
+
     <div id="main">
-        <div id="error">Your browser is too old to view this!</div>
-        
         <div class="party-sky">
             <div class="sky-background"></div>
             <div class="stars"></div>
         </div>
 
         <div class="animation-stage">
-            
             <div class="cake-float">
                 <div class="cake-tier c1"></div>
                 <div class="cake-tier c2"></div>
                 <div class="cake-tier c3"></div>
-                <div class="moving-frosting f1"></div>
-                <div class="moving-frosting f2"></div>
-                <div class="candle">
-                    <div class="flame"></div>
-                </div>
+                <div class="candle"><div class="flame"></div></div>
             </div>
 
-            <div class="typewriter-area">
-                <div id="code">
-                    <span class="queen">✨ Happy Birthday, Queen Eunice ✨</span><br><br>
-                    <span class="message">May your day be as beautiful as this scene...</span><br>
-                    <span class="message">Blooming with love, laughter, and endless joy. ❤️</span><br>
-                    <span class="message">You deserve the world! 🌸✨</span>
-                </div>
+            <div id="code">
+                <span class="queen">✨ Happy Birthday, Queen Eunice ✨</span><br><br>
+                <span class="message">I hope your day is as amazing as you are 🍀</span><br>
+                <span class="message">And filled with so much happiness 💞</span><br>
+                <span class="message">I hope you have a great day today! ❤️ 💕</span>
             </div>
         </div>
     </div>
@@ -59,7 +55,6 @@
         canvas.attr("width", width);
         canvas.attr("height", height);
 
-        // Standard tree parameters (reusing the logic)
         var opts = {
             seed: { x: width / 2 - 20, color: "rgb(190, 26, 37)", scale: 2 },
             branch: [ [535, 680, 570, 250, 500, 200, 30, 100, [ [540, 500, 455, 417, 340, 400, 13, 100, [ [450, 435, 434, 430, 394, 395, 2, 40] ] ], [550, 445, 600, 356, 680, 345, 12, 100, [ [578, 400, 648, 409, 661, 426, 3, 80] ] ], [539, 281, 537, 248, 534, 217, 3, 40], [546, 397, 413, 247, 328, 244, 9, 80, [ [427, 286, 383, 253, 371, 205, 2, 40], [498, 345, 435, 315, 395, 330, 4, 60] ] ], [546, 357, 608, 252, 678, 221, 6, 100, [ [590, 293, 646, 277, 648, 271, 2, 80] ] ] ] ] ],
@@ -71,34 +66,23 @@
         var seed = tree.seed;
         var hold = 1;
 
-        // Interaction: click the screen to start the 'reveal' sequence
-        // We removed audio, so this is just the trigger.
-        canvas.click(function(e) {
-            var offset = canvas.offset(), x, y;
-            x = e.pageX - offset.left; y = e.pageY - offset.top;
-            if (seed.hover(x, y)) {
-                hold = 0; 
-                canvas.unbind("click");
-                canvas.removeClass('hand');
-            }
+        // When she clicks the overlay, it starts the animation
+        $('#click-me-overlay').click(function() {
+            $(this).fadeOut(); // Removes the "Click Here"
+            hold = 0;
+            runAsync().start();
         });
 
-        // The sequence: growing, flowering, then text reveal.
         var runAsync = eval(Jscex.compile("async", function () {
-            // First, make the tree appear and grow on top of the colorful bg
             seed.draw();
             while (hold) { $await(Jscex.Async.sleep(10)); }
             while (seed.canScale()) { seed.scale(0.95); $await(Jscex.Async.sleep(10)); }
             while (seed.canMove()) { seed.move(0, 2); $await(Jscex.Async.sleep(10)); }
             do { tree.grow(); $await(Jscex.Async.sleep(10)); } while (tree.canGrow());
             do { tree.flower(2); $await(Jscex.Async.sleep(10)); } while (tree.canFlower());
-
-            // After tree is done, reveal the cake and the fancy message
             $(".animation-stage").fadeIn(2000);
             $("#code").show().typewriter();
         }));
-
-        runAsync().start();
     })();
     </script>
 </body>
