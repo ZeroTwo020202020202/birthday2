@@ -7,6 +7,10 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <audio id="myAudio" loop>
+        <source src="aud.mp3" type="audio/mp3">
+    </audio>
+
     <div id="click-me-overlay">
         <div class="pulsing-heart">❤️</div>
         <p>CLICK HERE</p>
@@ -66,9 +70,14 @@
         var seed = tree.seed;
         var hold = 1;
 
-        // When she clicks the overlay, it starts the animation
+        // 3. UPDATED CLICK FUNCTION (Triggers audio + animation)
         $('#click-me-overlay').click(function() {
-            $(this).fadeOut(); // Removes the "Click Here"
+            var audio = document.getElementById("myAudio");
+            if (audio) {
+                audio.play().catch(function(e) { console.log("Playback failed", e); });
+            }
+            
+            $(this).fadeOut(); 
             hold = 0;
             runAsync().start();
         });
