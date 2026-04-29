@@ -59,6 +59,6 @@ function timeElapse(date){
 	$("#clock").html(result);
 
 	// ❤️ Updated message (Anusha added, unwanted line removed)
-	var text = "The world got more beautiful the day Anusha was born 💖✨";
+	var text = "The world got more beautiful the day Ammulu was born 💖✨";
 	$("#message-box").html(text);
 }
